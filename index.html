@@ -117,7 +117,7 @@
   <a-scene
     embedded
     vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth:640; sourceHeight:480;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     renderer="logarithmicDepthBuffer: true;"
   >
     <a-assets>
@@ -126,6 +126,7 @@
         src="https://github.com/Paulowollf/teste_AR/raw/refs/heads/main/video.mp4"
         preload="auto"
         loop
+        muted <!-- Mantido o atributo muted para garantir autoplay em iOS -->
         playsinline
         webkit-playsinline
         crossorigin="anonymous"
@@ -156,9 +157,6 @@
     const unmuteButton = document.getElementById("unmuteButton");
     let videoPlayedOnce = false;
 
-    // Remove o atributo 'muted' e adiciona a propriedade 'muted' no JS para controle inicial
-    videoElement.muted = true; // Começa mudo por padrão para tentar autoplay
-
     // Componente A-Frame personalizado para controlar a reprodução do vídeo com o marcador
     AFRAME.registerComponent('play-on-marker', {
       init: function () {
@@ -173,10 +171,16 @@
               console.log('Vídeo iniciado automaticamente.');
               infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
               videoPlayedOnce = true;
-              if (video.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+              // Se o vídeo foi iniciado, ocultar o botão de play
+              playButton.style.display = 'none';
+              // Mostrar o botão de desmutar se o vídeo estiver mudo
+              if (video.muted) {
                 unmuteButton.style.display = 'flex';
+                unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
+              } else {
+                unmuteButton.style.display = 'flex';
+                unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
               }
-              playButton.style.display = 'none'; // Oculta o botão de play
             }).catch(error => {
               console.error('Erro ao tentar reproduzir o vídeo automaticamente:', error);
               infoText.innerHTML = '<p>Toque em "Iniciar Vídeo" para começar.</p><p>Erro de autoplay no navegador.</p>';
@@ -188,10 +192,14 @@
             video.play().then(() => {
               console.log('Vídeo retomado.');
               infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
-              if (video.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+              // Mostrar o botão de desmutar se o vídeo estiver mudo
+              if (video.muted) {
                 unmuteButton.style.display = 'flex';
+                unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
+              } else {
+                unmuteButton.style.display = 'flex';
+                unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
               }
-              playButton.style.display = 'none'; // Oculta o botão de play
             }).catch(error => {
               console.error('Erro ao retomar vídeo:', error);
             });
@@ -219,8 +227,13 @@
           infoText.innerHTML = '<p>Vídeo iniciado!</p><p>Aponte para o marcador Hiro.</p>';
           videoPlayedOnce = true;
           playButton.style.display = 'none'; // Oculta o botão de play
-          if (videoElement.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+          // Mostrar o botão de desmutar se o vídeo estiver mudo
+          if (videoElement.muted) {
             unmuteButton.style.display = 'flex';
+            unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
+          } else {
+            unmuteButton.style.display = 'flex';
+            unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
           }
         }).catch(error => {
           console.error('Erro ao tentar reproduzir o vídeo com clique:', error);
@@ -229,8 +242,13 @@
       } else {
         console.log('Vídeo já está em reprodução.');
         playButton.style.display = 'none'; // Oculta o botão se já estiver tocando
+        // Mostrar o botão de desmutar se o vídeo estiver mudo
         if (videoElement.muted) {
           unmuteButton.style.display = 'flex';
+          unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
+        } else {
+          unmuteButton.style.display = 'flex';
+          unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
         }
       }
     }
@@ -249,14 +267,14 @@
 
     // Ocultar os botões inicialmente
     document.addEventListener('DOMContentLoaded', () => {
-        playButton.style.display = 'none';
-        unmuteButton.style.display = 'none';
+        playButton.style.display = 'none'; // Oculta o botão de play
+        unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
     });
 
     // Listener para o evento 'loadeddata' do vídeo
     videoElement.addEventListener('loadeddata', () => {
       console.log('Vídeo carregado e pronto para ser reproduzido.');
-      // Tenta reproduzir o vídeo silenciosamente quando carregado
+      // Tenta reproduzir o vídeo silenciosamente quando carregado (para o navegador pré-carregar e permitir autoplay)
       videoElement.play().then(() => {
         console.log('Tentativa de autoplay silencioso bem-sucedida.');
         videoElement.pause(); // Pausa o vídeo para aguardar o marcador
