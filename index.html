@@ -92,15 +92,14 @@
         embedded
         id="arScene"
     >
-        <!-- Define o asset do vídeo (AGORA APONTA PARA './video.mp4') -->
+        <!-- Define o asset do vídeo -->
         <a-assets>
             <video id="vendedorVideo" src="./video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
         <!-- Marcador AR personalizado
-             Você precisará gerar um arquivo .patt para sua imagem de marcador.
-             Este exemplo usa um marcador placeholder. Altere 'pattern-vendedor.patt' para o nome do seu arquivo. -->
-        <a-marker type="pattern" url="./marker/pattern-vendedor.patt">
+             AGORA COM O CAMINHO RELATIVO CORRETO! -->
+        <a-marker type="pattern" url="./marker/vendedor-pattern.patt">
             <!-- Um plano para exibir o vídeo. Ajuste width/height e position conforme necessário. -->
             <a-plane
                 src="#vendedorVideo"
@@ -163,8 +162,8 @@
                         console.error("Erro ao tentar reproduzir o vídeo após encontrar marcador:", error);
                         // Pode ser necessário mostrar o botão de play novamente se o erro persistir
                     });
-                }
-            });
+                });
+            }
         });
     </script>
 </body>
