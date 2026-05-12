@@ -71,7 +71,29 @@
       transform: translateY(0);
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
-    .button .icon {
+    .unmute-button {
+      background: linear-gradient(135deg, #28a745, #218838); /* Verde */
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      margin-bottom: 15px; /* Menor que o botão principal */
+      pointer-events: auto;
+      display: none; /* Oculto por padrão */
+      align-items: center;
+      gap: 8px;
+    }
+    .unmute-button:hover {
+      background: linear-gradient(135deg, #218838, #1e7e34);
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+    }
+    .button .icon, .unmute-button .icon {
       font-size: 1.4em;
     }
   </style>
@@ -82,15 +104,20 @@
       <p>Aponte a câmera para o **marcador Hiro**.</p>
       <p>O vídeo iniciará **automaticamente** ao detectar o marcador.</p>
     </div>
-    <button class="button" onclick="requestVideoPlay()">
-      <span class="icon">▶️</span> Iniciar Vídeo (se necessário)
-    </button>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button class="button" id="playButton" onclick="requestVideoPlay()">
+        <span class="icon">▶️</span> Iniciar Vídeo (se necessário)
+      </button>
+      <button class="unmute-button" id="unmuteButton" onclick="toggleMute()">
+        <span class="icon">🔊</span> Ativar Som
+      </button>
+    </div>
   </div>
 
   <a-scene
     embedded
     vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth:640; sourceHeight:480;"
     renderer="logarithmicDepthBuffer: true;"
   >
     <a-assets>
@@ -99,7 +126,6 @@
         src="https://github.com/Paulowollf/teste_AR/raw/refs/heads/main/video.mp4"
         preload="auto"
         loop
-        muted
         playsinline
         webkit-playsinline
         crossorigin="anonymous"
@@ -113,8 +139,8 @@
         src="#arVideo"
         position="0 0.03 0"
         rotation="-90 0 0"
-        width="0.9"  <!-- Largura ajustada para 9:16 -->
-        height="1.6" <!-- Altura ajustada para 9:16 -->
+        width="0.45"  <!-- Largura ajustada para 9:16 e menor -->
+        height="0.8" <!-- Altura ajustada para 9:16 e menor -->
         play-on-marker
       ></a-video>
     </a-marker>
@@ -126,7 +152,12 @@
   <script>
     const videoElement = document.getElementById("arVideo");
     const infoText = document.getElementById("infoText");
+    const playButton = document.getElementById("playButton");
+    const unmuteButton = document.getElementById("unmuteButton");
     let videoPlayedOnce = false;
+
+    // Remove o atributo 'muted' e adiciona a propriedade 'muted' no JS para controle inicial
+    videoElement.muted = true; // Começa mudo por padrão para tentar autoplay
 
     // Componente A-Frame personalizado para controlar a reprodução do vídeo com o marcador
     AFRAME.registerComponent('play-on-marker', {
@@ -142,17 +173,25 @@
               console.log('Vídeo iniciado automaticamente.');
               infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
               videoPlayedOnce = true;
+              if (video.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+                unmuteButton.style.display = 'flex';
+              }
+              playButton.style.display = 'none'; // Oculta o botão de play
             }).catch(error => {
               console.error('Erro ao tentar reproduzir o vídeo automaticamente:', error);
               infoText.innerHTML = '<p>Toque em "Iniciar Vídeo" para começar.</p><p>Erro de autoplay no navegador.</p>';
-              // Mostrar o botão se autoplay falhar
-              document.querySelector('.button').style.display = 'flex';
+              playButton.style.display = 'flex'; // Mostrar o botão se autoplay falhar
+              unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
             });
           } else if (video.paused && videoPlayedOnce) {
             // Se já foi reproduzido uma vez, tentar dar play novamente
             video.play().then(() => {
               console.log('Vídeo retomado.');
               infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
+              if (video.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+                unmuteButton.style.display = 'flex';
+              }
+              playButton.style.display = 'none'; // Oculta o botão de play
             }).catch(error => {
               console.error('Erro ao retomar vídeo:', error);
             });
@@ -166,6 +205,7 @@
             video.pause();
             console.log('Vídeo pausado.');
             infoText.innerHTML = '<p>Marcador perdido. Aponte novamente para continuar.</p>';
+            unmuteButton.style.display = 'none'; // Oculta o botão de desmutar quando o vídeo pausa
           }
         });
       }
@@ -178,21 +218,39 @@
           console.log('Vídeo iniciado por clique do usuário.');
           infoText.innerHTML = '<p>Vídeo iniciado!</p><p>Aponte para o marcador Hiro.</p>';
           videoPlayedOnce = true;
-          // Ocultar o botão após o clique, se o vídeo começar
-          document.querySelector('.button').style.display = 'none';
+          playButton.style.display = 'none'; // Oculta o botão de play
+          if (videoElement.muted) { // Se o vídeo ainda está mudo, mostre o botão de desmutar
+            unmuteButton.style.display = 'flex';
+          }
         }).catch(error => {
           console.error('Erro ao tentar reproduzir o vídeo com clique:', error);
           infoText.innerHTML = '<p>Falha ao iniciar. Verifique as permissões de mídia.</p>';
         });
       } else {
         console.log('Vídeo já está em reprodução.');
-        document.querySelector('.button').style.display = 'none'; // Oculta o botão se já estiver tocando
+        playButton.style.display = 'none'; // Oculta o botão se já estiver tocando
+        if (videoElement.muted) {
+          unmuteButton.style.display = 'flex';
+        }
       }
     }
 
-    // Ocultar o botão "Iniciar Vídeo" inicialmente
+    // Função para ativar/desativar o som
+    function toggleMute() {
+      videoElement.muted = !videoElement.muted;
+      if (!videoElement.muted) {
+        unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
+        console.log('Som ativado.');
+      } else {
+        unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
+        console.log('Som desativado.');
+      }
+    }
+
+    // Ocultar os botões inicialmente
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.button').style.display = 'none';
+        playButton.style.display = 'none';
+        unmuteButton.style.display = 'none';
     });
 
     // Listener para o evento 'loadeddata' do vídeo
@@ -201,13 +259,12 @@
       // Tenta reproduzir o vídeo silenciosamente quando carregado
       videoElement.play().then(() => {
         console.log('Tentativa de autoplay silencioso bem-sucedida.');
-        // Se o autoplay silencioso funcionar, o vídeo está pronto para ser pausado e tocado com o marcador
-        videoElement.pause();
+        videoElement.pause(); // Pausa o vídeo para aguardar o marcador
         infoText.innerHTML = '<p>Aponte a câmera para o **marcador Hiro**.</p><p>O vídeo iniciará automaticamente.</p>';
       }).catch(error => {
         console.warn('Autoplay silencioso falhou, provavelmente bloqueado pelo navegador. Erro:', error);
         infoText.innerHTML = '<p>Aponte para o marcador Hiro.</p><p>Se não iniciar, toque em "Iniciar Vídeo".</p>';
-        document.querySelector('.button').style.display = 'flex'; // Exibe o botão se autoplay falhar
+        playButton.style.display = 'flex'; // Exibe o botão de play se autoplay falhar
       });
     });
 
@@ -217,6 +274,7 @@
       infoText.innerHTML = '<p>Vídeo concluído. Aponte para o marcador Hiro para repetir.</p>';
       videoElement.currentTime = 0; // Volta para o início se o loop não estiver ativo
       videoPlayedOnce = false; // Permite que o vídeo seja iniciado novamente
+      unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
     });
   </script>
 </body>
