@@ -117,7 +117,7 @@
   <a-scene
     embedded
     vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraFacingMode: environment;"
     renderer="logarithmicDepthBuffer: true;"
   >
     <a-assets>
@@ -171,8 +171,7 @@
               console.log('Vídeo iniciado automaticamente.');
               infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
               videoPlayedOnce = true;
-              // Se o vídeo foi iniciado, ocultar o botão de play
-              playButton.style.display = 'none';
+              playButton.style.display = 'none'; // Oculta o botão de play
               // Mostrar o botão de desmutar se o vídeo estiver mudo
               if (video.muted) {
                 unmuteButton.style.display = 'flex';
