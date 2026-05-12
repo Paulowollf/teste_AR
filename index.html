@@ -2,204 +2,232 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vídeo AR Interativo</title>
 
-  <!-- REMOVE ZOOM MOBILE -->
-  <meta
-    name="viewport"
-    content="width=device-width,
-             initial-scale=1.0,
-             maximum-scale=1.0,
-             user-scalable=no,
-             viewport-fit=cover"
-  />
+  <!-- Meta tags para melhorar a compatibilidade com dispositivos móveis -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
 
-  <title>AR Video</title>
-
-  <!-- AFRAME -->
+  <!-- A-Frame e AR.js -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- ARJS -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
   <style>
-    html,
     body {
       margin: 0;
-      padding: 0;
       overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f0f0;
+    }
+    .overlay-container {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      background: #000;
-      touch-action: none;
-      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000; /* Garante que a interface esteja acima da cena AR */
+      pointer-events: none; /* Permite cliques passarem para elementos abaixo por padrão */
     }
-
-    canvas,
-    video {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-    }
-
     .info {
-      position: fixed;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      padding: 10px 18px;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 12px 20px;
       border-radius: 12px;
-      font-size: 14px;
+      margin-top: 20px;
+      font-size: 1.1em;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      pointer-events: auto; /* Permite interação com o info box */
     }
-
-    .start-button {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-
-      background: #000;
-      color: #fff;
+    .button {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      padding: 16px 30px;
       border: none;
-
-      padding: 16px 28px;
-      border-radius: 14px;
-      font-size: 16px;
+      border-radius: 30px;
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+      pointer-events: auto; /* Permite interação com o botão */
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .button:hover {
+      background: linear-gradient(135deg, #0056b3, #003d80);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    }
+    .button:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .button .icon {
+      font-size: 1.4em;
     }
   </style>
 </head>
-
 <body>
+  <div class="overlay-container">
+    <div class="info" id="infoText">
+      <p>Aponte a câmera para o **marcador Hiro**.</p>
+      <p>O vídeo iniciará **automaticamente** ao detectar o marcador.</p>
+    </div>
+    <button class="button" onclick="requestVideoPlay()">
+      <span class="icon">▶️</span> Iniciar Vídeo (se necessário)
+    </button>
+  </div>
 
-<div class="info">
-  Aponte para o marcador Hiro
-</div>
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="logarithmicDepthBuffer: true;"
+  >
+    <a-assets>
+      <!--
+        IMPORTANTE: Substitua 'SUA_URL_DO_VIDEO_MP4_AQUI' pela URL RAW do seu vídeo no GitHub.
+        Exemplo: https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/caminho/para/seu/video.mp4
 
-<button class="start-button" id="startButton">
-  Iniciar AR
-</button>
+        Certifique-se de que o vídeo seja acessível publicamente e no formato MP4.
+        Para obter a URL RAW de um arquivo no GitHub:
+        1. Navegue até o arquivo de vídeo no seu repositório.
+        2. Clique no botão "Raw".
+        3. Copie a URL da barra de endereços do navegador.
+      -->
+      <video
+        id="arVideo"
+        src="https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/video.mp4"
+        preload="auto"
+        loop
+        muted
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous"
+      ></video>
+    </a-assets>
 
-<a-scene
-  embedded
-  vr-mode-ui="enabled: false"
+    <!-- Marcardor Hiro -->
+    <a-marker preset="hiro">
+      <!-- Entidade de vídeo. O evento 'markerFound' e 'markerLost' controlarão a reprodução. -->
+      <a-video
+        src="#arVideo"
+        position="0 0.03 0"
+        rotation="-90 0 0"
+        width="1.6"
+        height="0.9"
+        play-on-marker
+      ></a-video>
+    </a-marker>
 
-  renderer="
-    antialias: true;
-    alpha: true;
-    precision: medium;
-  "
+    <!-- Câmera do AR.js -->
+    <a-entity camera></a-entity>
+  </a-scene>
 
-  arjs="
-    sourceType: webcam;
-    debugUIEnabled: false;
-    trackingMethod: best;
-    facingMode: environment;
+  <script>
+    const videoElement = document.getElementById("arVideo");
+    const infoText = document.getElementById("infoText");
+    let videoPlayedOnce = false;
 
-    displayWidth: 1280;
-    displayHeight: 720;
-  "
->
+    // Componente A-Frame personalizado para controlar a reprodução do vídeo com o marcador
+    AFRAME.registerComponent('play-on-marker', {
+      init: function () {
+        const marker = this.el.parentNode; // O pai é o a-marker
+        const video = document.getElementById("arVideo");
 
-  <a-assets>
+        // Quando o marcador é encontrado
+        marker.addEventListener('markerFound', () => {
+          console.log('Marcador Hiro encontrado!');
+          if (video.paused && !videoPlayedOnce) {
+            video.play().then(() => {
+              console.log('Vídeo iniciado automaticamente.');
+              infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
+              videoPlayedOnce = true;
+            }).catch(error => {
+              console.error('Erro ao tentar reproduzir o vídeo automaticamente:', error);
+              infoText.innerHTML = '<p>Toque em "Iniciar Vídeo" para começar.</p><p>Erro de autoplay no navegador.</p>';
+              // Mostrar o botão se autoplay falhar
+              document.querySelector('.button').style.display = 'flex';
+            });
+          } else if (video.paused && videoPlayedOnce) {
+            // Se já foi reproduzido uma vez, tentar dar play novamente
+            video.play().then(() => {
+              console.log('Vídeo retomado.');
+              infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
+            }).catch(error => {
+              console.error('Erro ao retomar vídeo:', error);
+            });
+          }
+        });
 
-    <!-- VIDEO IOS -->
-    <video
-      id="video"
+        // Quando o marcador é perdido
+        marker.addEventListener('markerLost', () => {
+          console.log('Marcador Hiro perdido!');
+          if (!video.paused) {
+            video.pause();
+            console.log('Vídeo pausado.');
+            infoText.innerHTML = '<p>Marcador perdido. Aponte novamente para continuar.</p>';
+          }
+        });
+      }
+    });
 
-      src="video.mp4"
-
-      preload="auto"
-
-      loop
-      muted
-      autoplay
-
-      playsinline
-      webkit-playsinline
-
-      x5-video-player-type="h5"
-      x5-video-player-fullscreen="false"
-
-      crossorigin="anonymous"
-    ></video>
-
-  </a-assets>
-
-  <!-- MARCADOR -->
-  <a-marker preset="hiro">
-
-    <!-- VIDEO -->
-    <a-video
-      src="#video"
-
-      position="0 0.03 0"
-
-      rotation="-90 0 0"
-
-      width="1.6"
-      height="0.9"
-    ></a-video>
-
-  </a-marker>
-
-  <!-- CAMERA -->
-  <a-entity camera></a-entity>
-
-</a-scene>
-
-<script>
-
-  const button = document.getElementById("startButton");
-  const video = document.getElementById("video");
-
-  // FORÇA PLAY IOS
-  async function startAR() {
-
-    try {
-
-      video.muted = true;
-
-      video.setAttribute("muted", true);
-      video.setAttribute("playsinline", true);
-      video.setAttribute("webkit-playsinline", true);
-
-      await video.play();
-
-      button.style.display = "none";
-
-    } catch (e) {
-
-      console.log(e);
-
-      alert("Toque novamente para iniciar.");
-
+    // Função para tentar iniciar o vídeo via interação do usuário
+    function requestVideoPlay() {
+      if (videoElement.paused) {
+        videoElement.play().then(() => {
+          console.log('Vídeo iniciado por clique do usuário.');
+          infoText.innerHTML = '<p>Vídeo iniciado!</p><p>Aponte para o marcador Hiro.</p>';
+          videoPlayedOnce = true;
+          // Ocultar o botão após o clique, se o vídeo começar
+          document.querySelector('.button').style.display = 'none';
+        }).catch(error => {
+          console.error('Erro ao tentar reproduzir o vídeo com clique:', error);
+          infoText.innerHTML = '<p>Falha ao iniciar. Verifique as permissões de mídia.</p>';
+        });
+      } else {
+        console.log('Vídeo já está em reprodução.');
+        document.querySelector('.button').style.display = 'none'; // Oculta o botão se já estiver tocando
+      }
     }
 
-  }
+    // Ocultar o botão "Iniciar Vídeo" inicialmente
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('.button').style.display = 'none';
+    });
 
-  button.addEventListener("click", startAR);
+    // Listener para o evento 'loadeddata' do vídeo
+    videoElement.addEventListener('loadeddata', () => {
+      console.log('Vídeo carregado e pronto para ser reproduzido.');
+      // Tenta reproduzir o vídeo silenciosamente quando carregado
+      videoElement.play().then(() => {
+        console.log('Tentativa de autoplay silencioso bem-sucedida.');
+        // Se o autoplay silencioso funcionar, o vídeo está pronto para ser pausado e tocado com o marcador
+        videoElement.pause();
+        infoText.innerHTML = '<p>Aponte a câmera para o **marcador Hiro**.</p><p>O vídeo iniciará automaticamente.</p>';
+      }).catch(error => {
+        console.warn('Autoplay silencioso falhou, provavelmente bloqueado pelo navegador. Erro:', error);
+        infoText.innerHTML = '<p>Aponte para o marcador Hiro.</p><p>Se não iniciar, toque em "Iniciar Vídeo".</p>';
+        document.querySelector('.button').style.display = 'flex'; // Exibe o botão se autoplay falhar
+      });
+    });
 
-  // REMOVE SUPER ZOOM ANDROID
-  window.addEventListener("camera-init", () => {
-
-    setTimeout(() => {
-
-      const camVideo = document.querySelector("video");
-
-      if (camVideo) {
-
-        camVideo.style.objectFit = "contain";
-
-      }
-
-    }, 1000);
-
-  });
-
-</script>
-
+    // Listener para o evento 'ended' do vídeo, caso não esteja em loop
+    videoElement.addEventListener('ended', () => {
+      console.log('Vídeo terminou.');
+      infoText.innerHTML = '<p>Vídeo concluído. Aponte para o marcador Hiro para repetir.</p>';
+      videoElement.currentTime = 0; // Volta para o início se o loop não estiver ativo
+      videoPlayedOnce = false; // Permite que o vídeo seja iniciado novamente
+    });
+  </script>
 </body>
 </html>
