@@ -31,14 +31,32 @@
       border-radius: 12px;
       font-size: 14px;
     }
+
+    .start-button {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      padding: 15px 25px;
+      border: none;
+      border-radius: 14px;
+      background: #000;
+      color: #fff;
+      font-size: 16px;
+    }
   </style>
 </head>
 
 <body>
 
 <div class="info">
-  Aponte a câmera para o marcador Hiro
+  Aponte para o marcador Hiro
 </div>
+
+<button class="start-button" onclick="startAR()">
+  Iniciar Experiência
+</button>
 
 <a-scene
   embedded
@@ -46,15 +64,14 @@
   vr-mode-ui="enabled: false"
 >
 
-  <!-- VIDEO -->
   <a-assets>
     <video
       id="video"
-      src="video.mp4.mp4"
+      src="video.mp4"
       preload="auto"
-      autoplay
       loop
       muted
+      crossorigin="anonymous"
       playsinline
       webkit-playsinline
     ></video>
@@ -63,21 +80,29 @@
   <!-- MARCADOR -->
   <a-marker preset="hiro">
 
-    <!-- VIDEO HOLOGRAMA -->
     <a-video
       src="#video"
       position="0 0.5 0"
-      rotation="-90 0 0"
       width="1.6"
       height="0.9"
     ></a-video>
 
   </a-marker>
 
-  <!-- CAMERA -->
   <a-entity camera></a-entity>
 
 </a-scene>
+
+<script>
+  function startAR() {
+
+    const video = document.getElementById("video");
+
+    video.play();
+
+    document.querySelector(".start-button").style.display = "none";
+  }
+</script>
 
 </body>
 </html>
