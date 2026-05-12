@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
   <title>AR Video</title>
 
@@ -13,9 +14,12 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
   <style>
-    body {
+    html, body {
       margin: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      background: #000;
       font-family: Arial, sans-serif;
     }
 
@@ -30,9 +34,29 @@
       padding: 10px 18px;
       border-radius: 12px;
       font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .start-button {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 16px 26px;
+      border-radius: 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
     }
   </style>
-</head>
 </head>
 
 <body>
@@ -41,39 +65,51 @@
   Aponte para o marcador Hiro
 </div>
 
+<button class="start-button" id="startButton">
+  Iniciar AR
+</button>
+
 <a-scene
   embedded
   vr-mode-ui="enabled: false"
-  renderer="logarithmicDepthBuffer: true;"
+  renderer="
+    antialias: true;
+    alpha: true;
+    precision: mediump;
+  "
+
   arjs="
-    trackingMethod: best;
     sourceType: webcam;
     debugUIEnabled: false;
+    trackingMethod: best;
+    facingMode: environment;
   "
 >
 
   <!-- ASSETS -->
   <a-assets>
+
     <video
       id="video"
       src="video.mp4"
       preload="auto"
-      autoplay
-      muted
       loop
+      muted
+      autoplay
+      crossorigin="anonymous"
       playsinline
       webkit-playsinline
-      crossorigin="anonymous"
     ></video>
+
   </a-assets>
 
   <!-- MARCADOR -->
   <a-marker preset="hiro">
 
-    <!-- VIDEO DEITADO -->
+    <!-- VIDEO -->
     <a-video
       src="#video"
-      position="0 0.01 0"
+      position="0 0.03 0"
       rotation="-90 0 0"
       width="1.6"
       height="0.9"
@@ -87,21 +123,50 @@
 </a-scene>
 
 <script>
-  window.addEventListener("load", () => {
+  const startButton = document.getElementById("startButton");
+  const video = document.getElementById("video");
 
-    const video = document.querySelector("#video");
+  async function startExperience() {
 
-    // força autoplay mobile
-    video.play().catch(() => {
+    try {
 
-      // fallback iPhone
-      document.body.addEventListener("click", () => {
-        video.play();
-      }, { once: true });
+      // força play no iPhone
+      video.muted = true;
+      video.playsInline = true;
+
+      await video.play();
+
+      startButton.style.display = "none";
+
+    } catch (err) {
+
+      alert("Toque novamente para iniciar o vídeo.");
+
+    }
+
+  }
+
+  startButton.addEventListener("click", startExperience);
+
+  // melhora zoom android
+  window.addEventListener("camera-init", () => {
+
+    const videos = document.querySelectorAll("video");
+
+    videos.forEach(v => {
+
+      v.setAttribute("autoplay", "");
+      v.setAttribute("muted", "");
+      v.setAttribute("playsinline", "");
+      v.setAttribute("webkit-playsinline", "");
+
+      // remove zoom exagerado android
+      v.style.objectFit = "cover";
 
     });
 
   });
+
 </script>
 
 </body>
