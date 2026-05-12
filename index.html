@@ -1,298 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vídeo AR Interativo</title>
-
-  <!-- Meta tags para melhorar a compatibilidade com dispositivos móveis -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
-
-  <!-- A-Frame e AR.js -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f0f0;
-    }
-    .overlay-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1000; /* Garante que a interface esteja acima da cena AR */
-      pointer-events: none; /* Permite cliques passarem para elementos abaixo por padrão */
-    }
-    .info {
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 12px;
-      margin-top: 20px;
-      font-size: 1.1em;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      pointer-events: auto; /* Permite interação com o info box */
-    }
-    .button {
-      background: linear-gradient(135deg, #007bff, #0056b3);
-      color: white;
-      padding: 16px 30px;
-      border: none;
-      border-radius: 30px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-      transition: all 0.3s ease;
-      margin-bottom: 30px;
-      pointer-events: auto; /* Permite interação com o botão */
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .button:hover {
-      background: linear-gradient(135deg, #0056b3, #003d80);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
-    }
-    .button:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-    .unmute-button {
-      background: linear-gradient(135deg, #28a745, #218838); /* Verde */
-      color: white;
-      padding: 12px 25px;
-      border: none;
-      border-radius: 25px;
-      font-size: 1em;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
-      margin-bottom: 15px; /* Menor que o botão principal */
-      pointer-events: auto;
-      display: none; /* Oculto por padrão */
-      align-items: center;
-      gap: 8px;
-    }
-    .unmute-button:hover {
-      background: linear-gradient(135deg, #218838, #1e7e34);
-      transform: translateY(-1px);
-      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
-    }
-    .button .icon, .unmute-button .icon {
-      font-size: 1.4em;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartão de Visita AR - CTRL IA</title>
+    <!-- Inclui a biblioteca A-Frame (para 3D) e AR.js (para AR) -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .arjs-loader div {
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .arjs-loader p {
+            margin-top: 15px;
+            font-size: 1.2em;
+        }
+        .arjs-loader button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+        }
+        #playButton {
+            display: none; /* Inicialmente oculto, aparece após o AR carregar */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            z-index: 10000;
+        }
+        #playButton p {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        #playButton button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+    </style>
 </head>
 <body>
-  <div class="overlay-container">
-    <div class="info" id="infoText">
-      <p>Aponte a câmera para o **marcador Hiro**.</p>
-      <p>O vídeo iniciará **automaticamente** ao detectar o marcador.</p>
+    <!-- Loader customizado para AR.js -->
+    <div class="arjs-loader">
+        <div>
+            <p>Carregando experiência de Realidade Aumentada...</p>
+            <button id="startButton" style="display: none;">Iniciar AR</button>
+        </div>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-      <button class="button" id="playButton" onclick="requestVideoPlay()">
-        <span class="icon">▶️</span> Iniciar Vídeo (se necessário)
-      </button>
-      <button class="unmute-button" id="unmuteButton" onclick="toggleMute()">
-        <span class="icon">🔊</span> Ativar Som
-      </button>
+
+    <!-- Interface para dar play no vídeo devido a restrições de autoplay -->
+    <div id="playButton">
+        <p>Aponte a câmera para o cartão de visita e clique em Iniciar Vídeo.</p>
+        <button id="videoPlay">Iniciar Vídeo</button>
     </div>
-  </div>
 
-  <a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraFacingMode: environment;"
-    renderer="logarithmicDepthBuffer: true;"
-  >
-    <a-assets>
-      <video
-        id="arVideo"
-        src="https://github.com/Paulowollf/teste_AR/raw/refs/heads/main/video.mp4"
-        preload="auto"
-        loop
-        muted <!-- Mantido o atributo muted para garantir autoplay em iOS -->
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous"
-      ></video>
-    </a-assets>
+    <!-- Definição da cena AR -->
+    <a-scene
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true;"
+        arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        embedded
+        id="arScene"
+    >
+        <!-- Define o asset do vídeo (AGORA APONTA PARA './video.mp4') -->
+        <a-assets>
+            <video id="vendedorVideo" src="./video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        </a-assets>
 
-    <!-- Marcardor Hiro -->
-    <a-marker preset="hiro">
-      <!-- Entidade de vídeo. O evento 'markerFound' e 'markerLost' controlarão a reprodução. -->
-      <a-video
-        src="#arVideo"
-        position="0 0.03 0"
-        rotation="-90 0 0"
-        width="0.45"  <!-- Largura ajustada para 9:16 e menor -->
-        height="0.8" <!-- Altura ajustada para 9:16 e menor -->
-        play-on-marker
-      ></a-video>
-    </a-marker>
+        <!-- Marcador AR personalizado
+             Você precisará gerar um arquivo .patt para sua imagem de marcador.
+             Este exemplo usa um marcador placeholder. Altere 'pattern-vendedor.patt' para o nome do seu arquivo. -->
+        <a-marker type="pattern" url="./marker/pattern-vendedor.patt">
+            <!-- Um plano para exibir o vídeo. Ajuste width/height e position conforme necessário. -->
+            <a-plane
+                src="#vendedorVideo"
+                width="1.6"
+                height="0.9"
+                position="0 0 0"
+                rotation="-90 0 0"
+                material="shader: flat; transparent: false; side: front;"
+                id="videoPlane"
+            ></a-plane>
+        </a-marker>
 
-    <!-- Câmera do AR.js -->
-    <a-entity camera></a-entity>
-  </a-scene>
+        <!-- Câmera AR -->
+        <a-entity camera></a-entity>
+    </a-scene>
 
-  <script>
-    const videoElement = document.getElementById("arVideo");
-    const infoText = document.getElementById("infoText");
-    const playButton = document.getElementById("playButton");
-    const unmuteButton = document.getElementById("unmuteButton");
-    let videoPlayedOnce = false;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoElement = document.getElementById('vendedorVideo');
+            const videoPlane = document.getElementById('videoPlane');
+            const playButtonDiv = document.getElementById('playButton');
+            const videoPlayButton = document.getElementById('videoPlay');
+            const arScene = document.getElementById('arScene');
+            const startButton = document.getElementById('startButton');
+            const arjsLoader = document.querySelector('.arjs-loader');
 
-    // Componente A-Frame personalizado para controlar a reprodução do vídeo com o marcador
-    AFRAME.registerComponent('play-on-marker', {
-      init: function () {
-        const marker = this.el.parentNode; // O pai é o a-marker
-        const video = document.getElementById("arVideo");
+            let arReady = false;
 
-        // Quando o marcador é encontrado
-        marker.addEventListener('markerFound', () => {
-          console.log('Marcador Hiro encontrado!');
-          if (video.paused && !videoPlayedOnce) {
-            video.play().then(() => {
-              console.log('Vídeo iniciado automaticamente.');
-              infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
-              videoPlayedOnce = true;
-              playButton.style.display = 'none'; // Oculta o botão de play
-              // Mostrar o botão de desmutar se o vídeo estiver mudo
-              if (video.muted) {
-                unmuteButton.style.display = 'flex';
-                unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
-              } else {
-                unmuteButton.style.display = 'flex';
-                unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
-              }
-            }).catch(error => {
-              console.error('Erro ao tentar reproduzir o vídeo automaticamente:', error);
-              infoText.innerHTML = '<p>Toque em "Iniciar Vídeo" para começar.</p><p>Erro de autoplay no navegador.</p>';
-              playButton.style.display = 'flex'; // Mostrar o botão se autoplay falhar
-              unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
+            // Lidar com o carregamento do AR.js
+            arScene.addEventListener('loaded', () => {
+                arReady = true;
+                arjsLoader.style.display = 'none'; // Esconde o loader quando a cena AR está pronta
+                playButtonDiv.style.display = 'block'; // Mostra o botão de play
             });
-          } else if (video.paused && videoPlayedOnce) {
-            // Se já foi reproduzido uma vez, tentar dar play novamente
-            video.play().then(() => {
-              console.log('Vídeo retomado.');
-              infoText.innerHTML = '<p>Vídeo em reprodução!</p><p>Mantenha o marcador visível.</p>';
-              // Mostrar o botão de desmutar se o vídeo estiver mudo
-              if (video.muted) {
-                unmuteButton.style.display = 'flex';
-                unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
-              } else {
-                unmuteButton.style.display = 'flex';
-                unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
-              }
-            }).catch(error => {
-              console.error('Erro ao retomar vídeo:', error);
+
+            // Lidar com o botão de play do vídeo
+            videoPlayButton.addEventListener('click', () => {
+                if (arReady && videoElement) {
+                    videoElement.play().then(() => {
+                        console.log("Vídeo iniciado com sucesso!");
+                        playButtonDiv.style.display = 'none'; // Esconde a interface de play
+                    }).catch(error => {
+                        console.error("Erro ao tentar reproduzir o vídeo:", error);
+                        alert("Não foi possível iniciar o vídeo. Por favor, tente novamente ou verifique as permissões da câmera.");
+                    });
+                }
             });
-          }
+
+            // Se o vídeo pausar (ex: perder o marcador), tenta pausar o vídeo
+            arScene.addEventListener('markerLost', () => {
+                if (videoElement && !videoElement.paused) {
+                    videoElement.pause();
+                }
+            });
+
+            // Se o vídeo for encontrado novamente, tenta dar play
+            arScene.addEventListener('markerFound', () => {
+                if (videoElement && videoElement.paused && playButtonDiv.style.display === 'none') {
+                    videoElement.play().catch(error => {
+                        console.error("Erro ao tentar reproduzir o vídeo após encontrar marcador:", error);
+                        // Pode ser necessário mostrar o botão de play novamente se o erro persistir
+                    });
+                }
+            });
         });
-
-        // Quando o marcador é perdido
-        marker.addEventListener('markerLost', () => {
-          console.log('Marcador Hiro perdido!');
-          if (!video.paused) {
-            video.pause();
-            console.log('Vídeo pausado.');
-            infoText.innerHTML = '<p>Marcador perdido. Aponte novamente para continuar.</p>';
-            unmuteButton.style.display = 'none'; // Oculta o botão de desmutar quando o vídeo pausa
-          }
-        });
-      }
-    });
-
-    // Função para tentar iniciar o vídeo via interação do usuário
-    function requestVideoPlay() {
-      if (videoElement.paused) {
-        videoElement.play().then(() => {
-          console.log('Vídeo iniciado por clique do usuário.');
-          infoText.innerHTML = '<p>Vídeo iniciado!</p><p>Aponte para o marcador Hiro.</p>';
-          videoPlayedOnce = true;
-          playButton.style.display = 'none'; // Oculta o botão de play
-          // Mostrar o botão de desmutar se o vídeo estiver mudo
-          if (videoElement.muted) {
-            unmuteButton.style.display = 'flex';
-            unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
-          } else {
-            unmuteButton.style.display = 'flex';
-            unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
-          }
-        }).catch(error => {
-          console.error('Erro ao tentar reproduzir o vídeo com clique:', error);
-          infoText.innerHTML = '<p>Falha ao iniciar. Verifique as permissões de mídia.</p>';
-        });
-      } else {
-        console.log('Vídeo já está em reprodução.');
-        playButton.style.display = 'none'; // Oculta o botão se já estiver tocando
-        // Mostrar o botão de desmutar se o vídeo estiver mudo
-        if (videoElement.muted) {
-          unmuteButton.style.display = 'flex';
-          unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
-        } else {
-          unmuteButton.style.display = 'flex';
-          unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
-        }
-      }
-    }
-
-    // Função para ativar/desativar o som
-    function toggleMute() {
-      videoElement.muted = !videoElement.muted;
-      if (!videoElement.muted) {
-        unmuteButton.innerHTML = '<span class="icon">🔇</span> Desativar Som';
-        console.log('Som ativado.');
-      } else {
-        unmuteButton.innerHTML = '<span class="icon">🔊</span> Ativar Som';
-        console.log('Som desativado.');
-      }
-    }
-
-    // Ocultar os botões inicialmente
-    document.addEventListener('DOMContentLoaded', () => {
-        playButton.style.display = 'none'; // Oculta o botão de play
-        unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
-    });
-
-    // Listener para o evento 'loadeddata' do vídeo
-    videoElement.addEventListener('loadeddata', () => {
-      console.log('Vídeo carregado e pronto para ser reproduzido.');
-      // Tenta reproduzir o vídeo silenciosamente quando carregado (para o navegador pré-carregar e permitir autoplay)
-      videoElement.play().then(() => {
-        console.log('Tentativa de autoplay silencioso bem-sucedida.');
-        videoElement.pause(); // Pausa o vídeo para aguardar o marcador
-        infoText.innerHTML = '<p>Aponte a câmera para o **marcador Hiro**.</p><p>O vídeo iniciará automaticamente.</p>';
-      }).catch(error => {
-        console.warn('Autoplay silencioso falhou, provavelmente bloqueado pelo navegador. Erro:', error);
-        infoText.innerHTML = '<p>Aponte para o marcador Hiro.</p><p>Se não iniciar, toque em "Iniciar Vídeo".</p>';
-        playButton.style.display = 'flex'; // Exibe o botão de play se autoplay falhar
-      });
-    });
-
-    // Listener para o evento 'ended' do vídeo, caso não esteja em loop
-    videoElement.addEventListener('ended', () => {
-      console.log('Vídeo terminou.');
-      infoText.innerHTML = '<p>Vídeo concluído. Aponte para o marcador Hiro para repetir.</p>';
-      videoElement.currentTime = 0; // Volta para o início se o loop não estiver ativo
-      videoPlayedOnce = false; // Permite que o vídeo seja iniciado novamente
-      unmuteButton.style.display = 'none'; // Oculta o botão de desmutar
-    });
-  </script>
+    </script>
 </body>
 </html>
