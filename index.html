@@ -94,13 +94,9 @@
     renderer="logarithmicDepthBuffer: true;"
   >
     <a-assets>
-      <!--
-        URL RAW do seu vídeo no GitHub, já atualizada com seu usuário e repositório.
-        Certifique-se de que o vídeo seja acessível publicamente e no formato MP4.
-      -->
       <video
         id="arVideo"
-        src="https://raw.githubusercontent.com/Paulowollf/teste_AR/main/video.mp4"
+        src="https://github.com/Paulowollf/teste_AR/raw/refs/heads/main/video.mp4"
         preload="auto"
         loop
         muted
@@ -117,8 +113,8 @@
         src="#arVideo"
         position="0 0.03 0"
         rotation="-90 0 0"
-        width="1.6"
-        height="0.9"
+        width="0.9"  <!-- Largura ajustada para 9:16 -->
+        height="1.6" <!-- Altura ajustada para 9:16 -->
         play-on-marker
       ></a-video>
     </a-marker>
