@@ -3,239 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartão de Visita - Realidade Aumentada</title>
+    <title>Cartão de Visita - RA</title>
     
-    <!-- AR.js -->
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/aframe/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/aframe/aframe-ar.js"></script>
-    
+    <!-- Scripts de RA -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        .arjs-loader {
+            height: 100%; width: 100%; position: absolute; top: 0; left: 0;
+            background-color: rgba(0, 0, 0, 0.8); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; color: white;
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
-        
-        #arScene {
-            width: 100%;
-            height: 100vh;
-        }
-        
-        .info-overlay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 10;
-            max-width: 300px;
-        }
-        
-        .info-overlay h2 {
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        
-        .info-overlay p {
-            margin: 5px 0;
-            line-height: 1.4;
-        }
-        
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 30px 50px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 20;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .instructions {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 14px;
-            z-index: 10;
-            max-width: 90%;
-        }
-        
-        .permission-request {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 30;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .permission-request h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .permission-request p {
-            margin-bottom: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .permission-request button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .permission-request button:hover {
-            background: #0056b3;
+        #instruction {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; padding: 10px 20px;
+            border-radius: 20px; z-index: 1000; text-align: center; width: 80%;
         }
     </style>
-</head>
-<body>
-    <div id="loadingScreen" class="loading">
-        <div class="spinner"></div>
-        <p>Iniciando câmera...</p>
-    </div>
-    
-    <div id="permissionRequest" class="permission-request" style="display: none;">
-        <h3>Permissão de Câmera Necessária</h3>
-        <p>Esta experiência de RA precisa acessar sua câmera para funcionar.</p>
-        <button onclick="requestCameraPermission()">Permitir Câmera</button>
-    </div>
-    
- <!-- ... (resto do seu head e style permanece igual) ... -->
 
-<a-scene 
-    id="arScene"
-    embedded 
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" 
-    vr-mode-ui="enabled: false">
-    
-    <!-- Pré-carregamento de Assets (Melhora a performance) -->
-    <a-assets>
-        <video id="meuVideo" src="video.mp4" preload="auto" loop="true" response-type="arraybuffer" crossorigin="anonymous" playsinline webkit-playsinline autocomplete="on"></video>
-    </a-assets>
-
-    <!-- Marcador Customizado usando o qrcode.patt da sua pasta -->
-    <a-marker type="pattern" url="qrcode.patt" id="marker">
-        <!-- Vídeo projetado sobre o marcador -->
-        <a-video 
-            src="#meuVideo" 
-            width="2" 
-            height="1.5"
-            rotation="-90 0 0"
-            position="0 0 0"
-            play-on-scan> <!-- Script para dar play automático -->
-        </a-video>
-    </a-marker>
-    
-    <a-entity camera></a-entity>
-</a-scene>
-
-<script>
-    // Script para garantir que o vídeo comece a tocar assim que o marcador for lido
-    AFRAME.registerComponent('play-on-scan', {
-        init: function () {
-            var video = document.querySelector('#meuVideo');
-            this.el.closest('a-marker').addEventListener('markerFound', () => {
-                video.play();
-            });
-            this.el.closest('a-marker').addEventListener('markerLost', () => {
-                video.pause();
-            });
-        }
-    });
-</script>
-<!-- ... (resto do seu HTML de overlay permanece igual) ... -->
-    <div class="info-overlay">
-        <h2>Cartão de Visita</h2>
-        <p><strong>Sua Empresa</strong></p>
-        <p>seu.email@empresa.com</p>
-        <p>(XX) XXXX-XXXX</p>
-    </div>
-    
-    <div class="instructions">
-        📱 Aponte para o marcador Hiro (símbolo no cartão) para ver o vídeo em RA
-    </div>
-    
     <script>
-        // Verificar suporte a WebXR
-        window.addEventListener('load', function() {
-            // Tentar acessar câmera automaticamente
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    // Câmera concedida
-                    stream.getTracks().forEach(track => track.stop());
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                    }, 1500);
-                })
-                .catch(function(error) {
-                    // Câmera negada
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('permissionRequest').style.display = 'block';
-                });
+        // Registro do componente ANTES da cena carregar
+        AFRAME.registerComponent('vidhandler', {
+            init: function () {
+                this.video = document.querySelector('#meuVideo');
+            },
+            tick: function () {
+                if (this.el.object3D.visible == true) {
+                    if (!this.toggle) {
+                        this.toggle = true;
+                        this.video.play();
+                    }
+                } else {
+                    this.toggle = false;
+                    this.video.pause();
+                }
+            }
         });
+    </script>
+</head>
+
+<body>
+    <!-- Overlay de Instrução -->
+    <div id="instruction">📱 Aponte para o QR Code para ver o vídeo</div>
+
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;"
+        vr-mode-ui="enabled: false">
         
-        function requestCameraPermission() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                    document.getElementById('permissionRequest').style.display = 'none';
-                    location.reload();
-                })
-                .catch(function(error) {
-                    alert('Permissão de câmera foi negada. Por favor, permita o acesso às configurações do navegador.');
-                });
-        }
-        
-        // Feedback visual quando o vídeo for detectado
-        document.addEventListener('markerFound', function() {
-            console.log('Marcador detectado!');
-        });
-        
-        document.addEventListener('markerLost', function() {
-            console.log('Marcador perdido!');
+        <a-assets>
+            <!-- O vídeo deve estar MUDO (muted) para o navegador permitir o autoplay -->
+            <video id="meuVideo" src="video.mp4" 
+                   preload="auto" loop="true" 
+                   crossorigin="anonymous" playsinline muted>
+            </video>
+        </a-assets>
+
+        <!-- Uso do seu arquivo qrcode.patt -->
+        <a-marker type="pattern" url="qrcode.patt" vidhandler>
+            <a-video 
+                src="#meuVideo" 
+                width="2" 
+                height="1.5" 
+                rotation="-90 0 0" 
+                position="0 0 0">
+            </a-video>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Forçar o play ao primeiro toque na tela (exigência de navegadores mobile)
+        window.addEventListener('click', function () {
+            var v = document.querySelector('#meuVideo');
+            v.play();
+            v.pause(); // Apenas para "acordar" o vídeo
         });
     </script>
 </body>
