@@ -143,43 +143,50 @@
         <button onclick="requestCameraPermission()">Permitir Câmera</button>
     </div>
     
-    <a-scene 
-        id="arScene"
-        embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; maxDetectionRate: 30;" 
-        vr-mode-ui="enabled: false">
-        
-        <!-- Câmera -->
-        <a-entity camera></a-entity>
-        
-        <!-- Marcador (padrão Hiro) -->
-        <a-marker preset="hiro">
-            <!-- Vídeo em realidade aumentada -->
-            <a-video 
-                id="arVideo"
-                src="assets/video.mp4" 
-                width="4" 
-                height="3"
-                rotation="-90 0 0"
-                position="0 0 0"
-                autoplay
-                loop
-                playsinline>
-            </a-video>
-            
-            <!-- Caixa ao redor do vídeo (opcional) -->
-            <a-box 
-                position="0 0 0.1" 
-                scale="4 3 0.1"
-                rotation="-90 0 0"
-                material="color: #2c3e50; transparent: true; opacity: 0.1">
-            </a-box>
-        </a-marker>
-        
-        <!-- Luz ambiente -->
-        <a-entity light="type: ambient; intensity: 1.5; color: white;"></a-entity>
-    </a-scene>
+ <!-- ... (resto do seu head e style permanece igual) ... -->
+
+<a-scene 
+    id="arScene"
+    embedded 
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" 
+    vr-mode-ui="enabled: false">
     
+    <!-- Pré-carregamento de Assets (Melhora a performance) -->
+    <a-assets>
+        <video id="meuVideo" src="video.mp4" preload="auto" loop="true" response-type="arraybuffer" crossorigin="anonymous" playsinline webkit-playsinline autocomplete="on"></video>
+    </a-assets>
+
+    <!-- Marcador Customizado usando o qrcode.patt da sua pasta -->
+    <a-marker type="pattern" url="qrcode.patt" id="marker">
+        <!-- Vídeo projetado sobre o marcador -->
+        <a-video 
+            src="#meuVideo" 
+            width="2" 
+            height="1.5"
+            rotation="-90 0 0"
+            position="0 0 0"
+            play-on-scan> <!-- Script para dar play automático -->
+        </a-video>
+    </a-marker>
+    
+    <a-entity camera></a-entity>
+</a-scene>
+
+<script>
+    // Script para garantir que o vídeo comece a tocar assim que o marcador for lido
+    AFRAME.registerComponent('play-on-scan', {
+        init: function () {
+            var video = document.querySelector('#meuVideo');
+            this.el.closest('a-marker').addEventListener('markerFound', () => {
+                video.play();
+            });
+            this.el.closest('a-marker').addEventListener('markerLost', () => {
+                video.pause();
+            });
+        }
+    });
+</script>
+<!-- ... (resto do seu HTML de overlay permanece igual) ... -->
     <div class="info-overlay">
         <h2>Cartão de Visita</h2>
         <p><strong>Sua Empresa</strong></p>
