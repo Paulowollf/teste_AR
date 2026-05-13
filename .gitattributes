@@ -1,2 +1,15 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Arquivo para melhor suporte a vídeos no Git
+
+# Vídeos
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+
+# Imagens grandes
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Marcadores
+*.patt binary

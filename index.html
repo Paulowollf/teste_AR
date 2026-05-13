@@ -3,168 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartão de Visita AR - CTRL IA</title>
-    <!-- Inclui a biblioteca A-Frame (para 3D) e AR.js (para AR) -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>Cartão de Visita - Realidade Aumentada</title>
+    
+    <!-- AR.js -->
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/aframe/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/aframe/aframe-ar.js"></script>
+    
     <style>
-        body { margin: 0; overflow: hidden; }
-        .arjs-loader {
-            height: 100%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        #arScene {
             width: 100%;
+            height: 100vh;
+        }
+        
+        .info-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .arjs-loader div {
-            text-align: center;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            font-family: Arial, sans-serif;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10;
+            max-width: 300px;
         }
-        .arjs-loader p {
-            margin-top: 15px;
-            font-size: 1.2em;
+        
+        .info-overlay h2 {
+            margin-bottom: 10px;
+            font-size: 18px;
         }
-        .arjs-loader button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin-top: 20px;
+        
+        .info-overlay p {
+            margin: 5px 0;
+            line-height: 1.4;
         }
-        #playButton {
-            display: none; /* Inicialmente oculto, aparece após o AR carregar */
-            position: fixed;
+        
+        .loading {
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 20px 30px;
+            padding: 30px 50px;
             border-radius: 10px;
-            font-family: Arial, sans-serif;
             text-align: center;
-            z-index: 10000;
+            z-index: 20;
         }
-        #playButton p {
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            z-index: 10;
+            max-width: 90%;
+        }
+        
+        .permission-request {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 30;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .permission-request h3 {
             margin-bottom: 15px;
-            font-size: 1.1em;
+            color: #333;
         }
-        #playButton button {
-            background-color: #28a745;
+        
+        .permission-request p {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .permission-request button {
+            background: #007bff;
             color: white;
             border: none;
-            padding: 12px 25px;
+            padding: 10px 30px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 14px;
+        }
+        
+        .permission-request button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
 <body>
-    <!-- Loader customizado para AR.js -->
-    <div class="arjs-loader">
-        <div>
-            <p>Carregando experiência de Realidade Aumentada...</p>
-            <button id="startButton" style="display: none;">Iniciar AR</button>
-        </div>
+    <div id="loadingScreen" class="loading">
+        <div class="spinner"></div>
+        <p>Iniciando câmera...</p>
     </div>
-
-    <!-- Interface para dar play no vídeo devido a restrições de autoplay -->
-    <div id="playButton">
-        <p>Aponte a câmera para o cartão de visita e clique em Iniciar Vídeo.</p>
-        <button id="videoPlay">Iniciar Vídeo</button>
+    
+    <div id="permissionRequest" class="permission-request" style="display: none;">
+        <h3>Permissão de Câmera Necessária</h3>
+        <p>Esta experiência de RA precisa acessar sua câmera para funcionar.</p>
+        <button onclick="requestCameraPermission()">Permitir Câmera</button>
     </div>
-
-    <!-- Definição da cena AR -->
-    <a-scene
-        vr-mode-ui="enabled: false;"
-        renderer="logarithmicDepthBuffer: true;"
-        arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-        embedded
+    
+    <a-scene 
         id="arScene"
-    >
-        <!-- Define o asset do vídeo (AGORA APONTA PARA './video.mp4') -->
-        <a-assets>
-            <video id="vendedorVideo" src="video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
-        </a-assets>
-
-        <!-- Marcador AR personalizado
-             Você precisará gerar um arquivo .patt para sua imagem de marcador.
-             Este exemplo usa um marcador placeholder. Altere 'pattern-vendedor.patt' para o nome do seu arquivo. -->
-        <a-marker type="pattern" url="./marker/pattern-vendedor.patt">
-            <!-- Um plano para exibir o vídeo. Ajuste width/height e position conforme necessário. -->
-            <a-plane
-                src="#vendedorVideo"
-                width="1.6"
-                height="0.9"
-                position="0 0 0"
-                rotation="-90 0 0"
-                material="shader: flat; transparent: false; side: front;"
-                id="videoPlane"
-            ></a-plane>
-        </a-marker>
-
-        <!-- Câmera AR -->
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; maxDetectionRate: 30;" 
+        vr-mode-ui="enabled: false">
+        
+        <!-- Câmera -->
         <a-entity camera></a-entity>
+        
+        <!-- Marcador (padrão Hiro) -->
+        <a-marker preset="hiro">
+            <!-- Vídeo em realidade aumentada -->
+            <a-video 
+                id="arVideo"
+                src="assets/video.mp4" 
+                width="4" 
+                height="3"
+                rotation="-90 0 0"
+                position="0 0 0"
+                autoplay
+                loop
+                playsinline>
+            </a-video>
+            
+            <!-- Caixa ao redor do vídeo (opcional) -->
+            <a-box 
+                position="0 0 0.1" 
+                scale="4 3 0.1"
+                rotation="-90 0 0"
+                material="color: #2c3e50; transparent: true; opacity: 0.1">
+            </a-box>
+        </a-marker>
+        
+        <!-- Luz ambiente -->
+        <a-entity light="type: ambient; intensity: 1.5; color: white;"></a-entity>
     </a-scene>
-
+    
+    <div class="info-overlay">
+        <h2>Cartão de Visita</h2>
+        <p><strong>Sua Empresa</strong></p>
+        <p>seu.email@empresa.com</p>
+        <p>(XX) XXXX-XXXX</p>
+    </div>
+    
+    <div class="instructions">
+        📱 Aponte para o marcador Hiro (símbolo no cartão) para ver o vídeo em RA
+    </div>
+    
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoElement = document.getElementById('vendedorVideo');
-            const videoPlane = document.getElementById('videoPlane');
-            const playButtonDiv = document.getElementById('playButton');
-            const videoPlayButton = document.getElementById('videoPlay');
-            const arScene = document.getElementById('arScene');
-            const startButton = document.getElementById('startButton');
-            const arjsLoader = document.querySelector('.arjs-loader');
-
-            let arReady = false;
-
-            // Lidar com o carregamento do AR.js
-            arScene.addEventListener('loaded', () => {
-                arReady = true;
-                arjsLoader.style.display = 'none'; // Esconde o loader quando a cena AR está pronta
-                playButtonDiv.style.display = 'block'; // Mostra o botão de play
-            });
-
-            // Lidar com o botão de play do vídeo
-            videoPlayButton.addEventListener('click', () => {
-                if (arReady && videoElement) {
-                    videoElement.play().then(() => {
-                        console.log("Vídeo iniciado com sucesso!");
-                        playButtonDiv.style.display = 'none'; // Esconde a interface de play
-                    }).catch(error => {
-                        console.error("Erro ao tentar reproduzir o vídeo:", error);
-                        alert("Não foi possível iniciar o vídeo. Por favor, tente novamente ou verifique as permissões da câmera.");
-                    });
-                }
-            });
-
-            // Se o vídeo pausar (ex: perder o marcador), tenta pausar o vídeo
-            arScene.addEventListener('markerLost', () => {
-                if (videoElement && !videoElement.paused) {
-                    videoElement.pause();
-                }
-            });
-
-            // Se o vídeo for encontrado novamente, tenta dar play
-            arScene.addEventListener('markerFound', () => {
-                if (videoElement && videoElement.paused && playButtonDiv.style.display === 'none') {
-                    videoElement.play().catch(error => {
-                        console.error("Erro ao tentar reproduzir o vídeo após encontrar marcador:", error);
-                        // Pode ser necessário mostrar o botão de play novamente se o erro persistir
-                    });
-                }
-            });
+        // Verificar suporte a WebXR
+        window.addEventListener('load', function() {
+            // Tentar acessar câmera automaticamente
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    // Câmera concedida
+                    stream.getTracks().forEach(track => track.stop());
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                    }, 1500);
+                })
+                .catch(function(error) {
+                    // Câmera negada
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('permissionRequest').style.display = 'block';
+                });
+        });
+        
+        function requestCameraPermission() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    document.getElementById('permissionRequest').style.display = 'none';
+                    location.reload();
+                })
+                .catch(function(error) {
+                    alert('Permissão de câmera foi negada. Por favor, permita o acesso às configurações do navegador.');
+                });
+        }
+        
+        // Feedback visual quando o vídeo for detectado
+        document.addEventListener('markerFound', function() {
+            console.log('Marcador detectado!');
+        });
+        
+        document.addEventListener('markerLost', function() {
+            console.log('Marcador perdido!');
         });
     </script>
 </body>
